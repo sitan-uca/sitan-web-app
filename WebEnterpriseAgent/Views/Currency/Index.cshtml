@@ -1,0 +1,68 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+<div class="container">
+    <div class="row mt-3">
+        <div class="col">
+            <h1 class="text-center">TIN</h1>
+            <hr />
+        </div>
+    </div>
+    <div id="alert-slot"></div>
+    <div class="row">
+        <div class="card mx-auto" style="width: 360px;">
+            <div id="overlay" class="d-flex justify-content-center align-items-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+            <div class="card-header">
+                Digital Governance Token Wallet
+            </div>
+            <div class="card-body">
+                <h4>Balance</h4>
+                <p>
+                    <span id="MY-balance">0</span> <strong>TIN</strong>
+                </p>
+                <h4>Transfer</h4>
+                <div class="form-group">
+                    <label for="transfer-address">Address</label>
+                    <input type="text" class="form-control" id="transfer-address" placeholder="0x...." />
+                </div>
+                <div class="form-group">
+                    <label for="transfer-amount">Amount</label>
+                    <input type="text" class="form-control" id="transfer-amount" placeholder="0" />
+                </div>
+                <button class="btn btn-primary btn-block" id="transfer-button" type="button">Transfer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<template id="failed-alert">
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Transfer Failed!</strong>
+        <div id="error-message"></div>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+</template>
+<template id="success-alert">
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>Transfer Successful!</strong>
+        <div id="success-message"></div>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+</template>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+@section Scripts
+{
+    <script type="module" src="~/js/dcurrency.js"></script>
+} 
+

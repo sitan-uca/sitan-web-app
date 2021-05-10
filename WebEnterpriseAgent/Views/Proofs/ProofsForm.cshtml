@@ -1,0 +1,321 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+
+@model ProofFormModel
+
+<form novalidate autocomplete="off" id="newProofRequestForm">
+    <div class="form-group row">
+        <div class="col-3">
+            <label class="col-form-label">Connection</label>
+        </div>
+        <div class="col">
+            <select class="custom-select" name="ConnectionId">
+                <option selected disabled value="">Select a Connection</option>
+                @foreach (var Connection in Model.Connections)
+                {
+                    if (Connection.State == ConnectionState.Connected)
+                    {
+                        <option value="@Connection.Id">@Connection.Alias.Name</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+    @*<div class="form-group row">
+        <div class="col-3">
+            <label class="col-form-label" for="ProofComment">Comment</label>
+        </div>
+        <div class="col">
+            <textarea class="form-control" id="ProofComment" name="Comment"
+                      cols="30" rows="3"></textarea>
+        </div>
+    </div>*@
+    <div class="card mb-3">
+        <div class="card-header">
+            <div class="row">
+                <div class="col">Requested Attributes</div>
+                <div class="col text-right">
+                    <a role="button" href="" id="addAttribute">Add Attribute</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="attributes-section">
+                <div class="card mb-3 attr-card">
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <div class="col-3">
+                                <label class="col-form-label">Attribute Name</label>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" class="form-control" name="RequestedAttributes[0].AttributeName" id="nameInput" aria-describedby="nameHelp" placeholder="Name">
+                                <small id="nameHelp" class="form-text text-muted">This is the name of the attribute you are requesting proof for</small>
+                            </div>
+                            <div class="col text-right">
+                                <div class="card-index" style="display: none">0</div>
+                                <a class="delete-btn text-danger" href="" role="button">Remove</a>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="col-3"></div>
+                            <div class="col">
+                                <div class="card">
+                                    <div class="card-header">
+                                        Restrictions
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group row">
+                                            <div class="col-3">
+                                                <input type="text" readonly class="form-control-plaintext" value="Issuer">
+                                            </div>
+                                            <div class="col">
+                                                <select class="custom-select custom-select" name="RequestedAttributes[0].Requirements.IssuerRestriction">
+                                                    <option selected value="">Select</option>
+                                                    @foreach (var Connection in Model.Connections)
+                                                    {
+                                                        if (Connection.State == ConnectionState.Connected)
+                                                        {
+                                                            <option value="@Connection.TheirDid">@Connection.TheirDid</option>
+                                                        }
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-3">
+                                                <input type="text" readonly class="form-control-plaintext" value="Schema Name">
+                                            </div>
+                                            <div class="col">
+                                                <select class="custom-select custom-select" name="RequestedAttributes[0].Requirements.SchemaNameRestriction">
+                                                    <option selected value="">Select</option>
+                                                    @foreach (var Schema in Model.Schemas)
+                                                    {
+                                                        <option value="@Schema.Name">@Schema.Name</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-3">
+                                                <input type="text" readonly class="form-control-plaintext" value="Schema Version">
+                                            </div>
+                                            <div class="col">
+                                                <select class="custom-select custom-select" name="RequestedAttributes[0].Requirements.SchemaVersionRestriction">
+                                                    <option selected value="">Select</option>
+                                                    @foreach (var Schema in Model.Schemas)
+                                                    {
+                                                        <option value="@Schema.Version">@Schema.Version</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-3">
+                                                <input type="text" readonly class="form-control-plaintext" value="Credential Deffinition">
+                                            </div>
+                                            <div class="col">
+                                                <select class="custom-select custom-select" name="RequestedAttributes[0].Requirements.CredDeffinitionRestriction">
+                                                    <option selected value="">Select</option>
+                                                    @foreach (var CredDef in Model.CredentialDefinitions)
+                                                    {
+                                                        <option value="@CredDef.Id">@CredDef.Id</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*<div class="card mb-3">
+        <div class="card-header">
+            <div class="row">
+                <div class="col">Requested Predicates</div>
+                <div class="col text-right">
+                    <a href="#" id="addPredicate">Add Predicate</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+
+        </div>
+    </div>*@
+</form>
+<button type="submit" form="newProofRequestForm" formmethod="post" asp-controller="Proofs" asp-action="RequestProof" class="btn btn-primary btn-lg btn-block">
+    Request Proof
+</button>
+<button type="submit" id="CreateProofRequestQR" asp-controller="Proofs" action="BuildRequestProofQR" class="btn btn-outline-primary m-2">
+    Generate QRCode
+</button>
+
+<div class="modal fade" id="requestQRModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Request Proof QR Code</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img class="img-fluid" id="requestQRModalImg" src="" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>                
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="RequestedAttrsTemplate" style="display: none">
+    <div class="card mb-3 attr-card">
+        <div class="card-body">
+            <div class="form-group row">
+                <div class="col-3">
+                    <label class="col-form-label">Attribute Name</label>
+                </div>
+                <div class="col-6">
+                    <input type="text" class="form-control" name="RequestedAttributes[ATTR_INDEX].AttributeName" id="nameInput" aria-describedby="nameHelp" placeholder="Name">
+                    <small id="nameHelp" class="form-text text-muted">This is the name of the attribute you are requesting proof for</small>
+                </div>
+                <div class="col text-right">
+                    <div class="card-index" style="display: none">ATTR_INDEX</div>
+                    <a class="delete-btn text-danger" href="" role="button">Remove</a>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-3"></div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-header">
+                            Restrictions
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <div class="col-3">
+                                    <input type="text" readonly class="form-control-plaintext" value="Issuer">
+                                </div>
+                                <div class="col">
+                                    <select class="custom-select custom-select" name="RequestedAttributes[ATTR_INDEX].Requirements.IssuerRestriction">
+                                        <option selected value="">Select</option>
+                                        @foreach (var Connection in Model.Connections)
+                                        {
+                                            if (Connection.State == ConnectionState.Connected)
+                                            {
+                                                <option value="@Connection.TheirDid">@Connection.TheirDid</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-3">
+                                    <input type="text" readonly class="form-control-plaintext" value="Schema Name">
+                                </div>
+                                <div class="col">
+                                    <select class="custom-select custom-select" name="RequestedAttributes[ATTR_INDEX].Requirements.SchemaNameRestriction">
+                                        <option selected value="">Select</option>
+                                        @foreach (var Schema in Model.Schemas)
+                                        {
+                                            <option value="@Schema.Name">@Schema.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-3">
+                                    <input type="text" readonly class="form-control-plaintext" value="Schema Version">
+                                </div>
+                                <div class="col">
+                                    <select class="custom-select custom-select" name="RequestedAttributes[ATTR_INDEX].Requirements.SchemaVersionRestriction">
+                                        <option selected value="">Select</option>
+                                        @foreach (var Schema in Model.Schemas)
+                                        {
+                                            <option value="@Schema.Version">@Schema.Version</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-3">
+                                    <input type="text" readonly class="form-control-plaintext" value="Credential Deffinition">
+                                </div>
+                                <div class="col">
+                                    <select class="custom-select custom-select" name="RequestedAttributes[ATTR_INDEX].Requirements.CredDeffinitionRestriction">
+                                        <option selected value="">Select</option>
+                                        @foreach (var CredDef in Model.CredentialDefinitions)
+                                        {
+                                            <option value="@CredDef.Id">@CredDef.Id</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script type="text/javascript">
+
+        $(function () {
+            var template = $('#RequestedAttrsTemplate');
+            var newAttrHTML = template.clone(false);
+            $('#addAttribute').click(function (e) {
+                e.preventDefault();
+                newAttrHTML.show();
+                var n = $('.attr-card').length - 1;
+                var modifiedAttrHTML = newAttrHTML.html().replace(/ATTR_INDEX/g, n);                
+                $('#attributes-section').append(modifiedAttrHTML);                
+            });
+        });
+        $(function () {
+            $('#attributes-section').on('click', '.delete-btn', function (e) {
+                e.preventDefault();
+
+                //get the index of the card to be deleted and delete it
+                var index = $(this).siblings('.card-index').text();
+                $(this).closest('.card').remove();
+
+                //update the model indexes after the deleted card
+                var n = $('.attr-card').length - 1;
+                for (var i = index; i < n; ++i) {
+                    var card = $('.attr-card')[i];                    
+                    var updatedHTML = $('#attributes-section').find(card).html().replace(/Attributes\[\d\]/g, 'Attributes[' + i + ']');
+                    $('#attributes-section').find(card).html(updatedHTML);                    
+                    $('#attributes-section').find(card).find(".card-index").text(i);                    
+                }                
+            });
+        });
+        $(function () {
+            $("#CreateProofRequestQR").click(function () {
+                //alert($(this).attr("action"));
+                $.ajax({
+                    url: $(this).attr("action"),
+                    type: 'post',
+                    data: $('#newProofRequestForm').serialize(),
+                    success: function (data) {
+                        //alert(data);
+                        var escapedData = escape(data);
+                        var qrUri = "https://chart.googleapis.com/chart?cht=qr&chs=300x300&chld=L|0&chl=" + escapedData;
+                        $('#requestQRModalImg').attr('src', qrUri);
+                        $('#requestQRModal').modal('show');
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        alert('Failed with error:\n' + thrownError);
+                    }
+                });
+            });
+        });
+    </script>
+}

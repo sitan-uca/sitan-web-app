@@ -1,0 +1,86 @@
+﻿@using System.Linq
+@model ConnectionsViewModel
+
+<div class="card w-100">
+    <div class="card-body">
+        <div class="d-flex flex-row-reverse">
+            <a class="btn btn-primary mx-1" role="button" asp-controller="Connections" asp-action="CreateInvitation">Create Invitation</a>
+            <button class="btn btn-primary mx-1" role="button" data-toggle="modal" data-target="#viewInvitaionModal">View Invitation</button>
+            <h5 class="card-title mr-auto my-auto">Connections</h5>
+        </div>        
+    </div>
+</div>
+
+<div class="modal fade" id="viewInvitaionModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">View Invitation</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="invitation-details-form" asp-controller="Connections" asp-action="ViewInvitation">
+                    <div class="form-group">
+                        <label for="invitation-details" class="col-form-label">Invitation URI:</label>
+                        <input autocomplete="off" name="InvitationDetails" id="invitation-details" class="form-control" type="search" placeholder="Invitation" aria-label="ViewInvitation">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button class="btn btn-outline-primary" type="submit" form="invitation-details-form">View Invitation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@if (Model.Connections.Any())
+{
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Status</th>
+                <th scope="col">Created</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Connections)
+            {
+            <tr>
+                <td>
+                    @if (item.State == ConnectionState.Connected)
+                    {
+                    <img src="@Url.Identicon(item.Alias.Name, size: 50)" style="width: 25px; height: 25px" />
+                    <a asp-area="" asp-controller="Connections" asp-action="Details" asp-route-id="@item.Id">@(item.Alias?.Name ?? item.Id)</a>
+                    }
+                    else
+                    {
+                    @(item.Alias?.Name ?? item.Id)
+                    }
+                </td>
+                <td>
+                    @item.State
+                </td>
+                <td>
+                    @item.CreatedAtUtc.Value.ToLocalTime()
+                </td>               
+                <td>
+                    <form class="container" asp-controller="Connections" asp-action="Delete">
+                        <input type="hidden" name="connectionId" value="@item.Id" />
+                        <button class="btn btn-sm btn-outline-danger mt-2" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
+else 
+{
+    <div class="text-muted text-center">No connections to display</div>
+}
