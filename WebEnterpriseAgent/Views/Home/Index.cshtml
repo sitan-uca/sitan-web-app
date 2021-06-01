@@ -3,14 +3,22 @@
 
 @{
     ViewData["Title"] = "Home";
-    var imgSrc = Model.Owner.ImageUrl ?? Url.Identicon(Model.Owner.Name, size: 200); 
+    var imgSrc = "";
+    if (Model.Owner.ImageUrl != null)
+    {
+        imgSrc = ViewData["ImagePrefix"] + Model.Owner.ImageUrl;
+    }
+    else
+    {
+        imgSrc = Url.Identicon(Model.Owner.Name, size: 200);
+    }
 }
 <div class="card text-center mt-2 w-50">
     <div class="card-header">
         Agent Provisioning Configuration
     </div>
     <div class="card-body">
-        <img style="width: 100px; height: 100px" src="@imgSrc" alt="@Model.Owner.Name">
+        <img style="width: 200px; height: 200px; object-fit:cover" src="@imgSrc" alt="@Model.Owner.Name">
         <h5 class="card-title mt-2">@Model.Owner.Name</h5>
         <small class="text-muted">@Model.Endpoint.Uri</small>
         

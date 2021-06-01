@@ -2,6 +2,15 @@
 @{
     ViewData["Title"] = "ViewInvitation";
     var invitationDetails = (string)ViewData["InvitationDetails"];
+    var imgSrc = "";
+    if (Model.ImageUrl != null)
+    {
+        imgSrc = "data:image/jpeg;base64," + Model.ImageUrl;
+    }
+    else
+    {
+        imgSrc = Url.Identicon(Model.Label, size: 300);
+    }
 }
 
 <form asp-controller="Connections" asp-action="AcceptInvitation">
@@ -10,11 +19,11 @@
         <div class="card-header">
             Invitation Details
         </div>
-        <img class="card-img" src="@Url.Identicon(Model.Label, size: 300)" alt="Card image cap">
+        <img class="card-img" style="width:300px; height:300px; object-fit: cover" src="@imgSrc" alt="Card image cap">
         <div class="card-body">
             <h5 class="card-title">@Model.Label</h5>
             <p class="card-text"><small class="text-muted">@Model.ServiceEndpoint</small></p>
-            <button type="submit" class="btn btn-primary">Accept Invitation</button>
+            <input type="submit" class="btn btn-primary" value="Accept Invitation"/>
         </div>
     </div>
 </form>

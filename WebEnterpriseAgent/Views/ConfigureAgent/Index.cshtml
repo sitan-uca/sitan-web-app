@@ -4,7 +4,15 @@
 @{ 
     //var respondCredReq = Model.AutoRespondCredentialRequest ? "checked" : "";
     //var respondCredOffer = Model.AutoRespondCredentialOffer ? "checked" : "";
-    var imgSrc = Model.Owner.ImageUrl ?? Url.Identicon(Model.Owner.Name, size: 200);
+    var imgSrc = "";
+    if (Model.Owner.ImageUrl != null)
+    {
+        imgSrc = ViewData["ImagePrefix"] + Model.Owner.ImageUrl;
+    }
+    else
+    {
+        imgSrc = Url.Identicon(Model.Owner.Name, size: 200);
+    }    
 }
 <div class="card">
     <div class="card-body">
@@ -13,7 +21,7 @@
             @*<img style="width: 100px; height: 100px" src="@Url.Identicon(Model.AgentImageUri, size: 200)" alt="@Model.AgentImageUri">*@
             <div class="form-group text-center">
                 @*<img style="width: 100px; height: 100px" src="@Model.AgentImageUri" alt="@Model.AgentImageUri">*@
-                <img style="width: 100px; height: 100px" src="@imgSrc" alt="@imgSrc">
+                <img style="width: 100px; height: 100px; object-fit:cover" src="@imgSrc" alt="Agent Profile Picture">
             </div>
             <div class="form-group row">
                 <div class="col-3">
@@ -37,7 +45,7 @@
                     <label for="did" class="col-form-label">Agent DID</label>
                 </div>
                 <div class="col">
-                    <input type="text" class="form-control" id="did" name="AgentDid" value="@Model.Endpoint.Did">
+                    <input type="text" readonly class="form-control" id="did" name="AgentDid" value="@Model.Endpoint.Did">
                 </div>
             </div>
             <div class="form-group row">
@@ -45,7 +53,7 @@
                     <label for="issuerDid" class="col-form-label">Agent Issuer DID</label>
                 </div>
                 <div class="col">
-                    <input type="text" class="form-control" id="issuerDid" name="IssuerDid" value="@Model.IssuerDid">
+                    <input type="text" readonly class="form-control" id="issuerDid" name="IssuerDid" value="@Model.IssuerDid">
                 </div>
             </div>
             <div class="form-group row">
@@ -69,9 +77,7 @@
                     </div>
                 </div>
             </div>           
-            <button type="submit" disabled class="btn btn-primary btn-lg">
-                Save
-            </button>
+            <input type="submit" class="btn btn-primary btn-lg btn-w-loading" value="Save" />                          
         </form>
     </div>
 </div>

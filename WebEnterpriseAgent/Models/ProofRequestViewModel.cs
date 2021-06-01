@@ -25,5 +25,7 @@ namespace WebAgent.Models
         public DateTime? UpdatedAtUtc { get; set; }
 
         public string Verified { get; set; }
+
+        public Dictionary<string, ProofAttribute> RevealedAttrs { get; set; }
     }
 }
