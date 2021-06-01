@@ -11,6 +11,10 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Hyperledger.Aries.Configuration;
+using Hyperledger.Indy.WalletApi;
 
 namespace WebEnterpriseAgent.Areas.Identity.Pages.Account
 {
@@ -20,14 +24,21 @@ namespace WebEnterpriseAgent.Areas.Identity.Pages.Account
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly AgentOptions _agentOptions;
+        private readonly IProvisioningService _provisioningService;
 
-        public LoginModel(SignInManager<IdentityUser> signInManager, 
+        public LoginModel(
+            SignInManager<IdentityUser> signInManager, 
+            IOptions<AgentOptions> agentOptions,
+            IProvisioningService provisioningService,
             ILogger<LoginModel> logger,
             UserManager<IdentityUser> userManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
+            _agentOptions = agentOptions.Value;
+            _provisioningService = provisioningService;
         }
 
         [BindProperty]
@@ -65,15 +76,26 @@ namespace WebEnterpriseAgent.Areas.Identity.Pages.Account
 
             // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            
+            _userManager.Options.Password.RequireNonAlphanumeric = false;
+            _userManager.Options.SignIn.RequireConfirmedAccount = false;
 
-            var user = _signInManager.UserManager.FindByEmailAsync("uca@test.com");
+            var user = _signInManager.UserManager.FindByEmailAsync("uca-reg@test.com");
             if (user.Result == null)
             {
-                var newuser = new IdentityUser { UserName = "uca-test", Email = "uca@test.com" };
-                await _userManager.CreateAsync(newuser, "Qwerty1!");
+                var newuser = new IdentityUser { UserName = "WebAgentWallet03", Email = "uca-reg@test.com" };
+                
+                await _userManager.CreateAsync(newuser, "MyWalletKey123");
             }
 
-            _userManager.Options.SignIn.RequireConfirmedAccount = false;
+            var user2 = _signInManager.UserManager.FindByEmailAsync("uca-international@test.com");
+            if (user2.Result == null)
+            {
+                var newuser = new IdentityUser { UserName = "WebAgentWalletINT02", Email = "uca-international@test.com" };
+
+                await _userManager.CreateAsync(newuser, "MyWalletKey123INT");
+            }
+
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
@@ -91,7 +113,18 @@ namespace WebEnterpriseAgent.Areas.Identity.Pages.Account
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
                 var result = await _signInManager.PasswordSignInAsync(user.Result?.UserName ?? string.Empty, Input.Password, Input.RememberMe, lockoutOnFailure: false);                
                 if (result.Succeeded)
-                {
+                {   
+                    _agentOptions.WalletCredentials.Key = Input.Password;
+                    _agentOptions.WalletConfiguration.Id = user.Result.UserName;                    
+
+                    try
+                    {
+                        await _provisioningService.ProvisionAgentAsync(_agentOptions);
+                    } catch (WalletExistsException)
+                    {
+                        // OK
+                    }                   
+                    
                     _logger.LogInformation("User logged in.");
                     return LocalRedirect(returnUrl);
                 }

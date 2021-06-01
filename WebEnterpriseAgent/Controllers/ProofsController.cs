@@ -1,4 +1,5 @@
-﻿using Hyperledger.Aries.Agents;
+﻿using Hyperledger.Aries;
+using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Configuration;
 using Hyperledger.Aries.Contracts;
 using Hyperledger.Aries.Extensions;
@@ -67,23 +68,59 @@ namespace WebAgent.Controllers
             var context = await _agentContextProvider.GetContextAsync();
             var proofs = await _proofService.ListAsync(context);
             var models = new List<ProofRequestViewModel>();
+
 #if RELEASE
             foreach (ProofRecord c in proofs)
-            {                
-                var connection = c.ConnectionId == null ? null : await _connectionService.GetAsync(context, c.ConnectionId);
-                models.Add(new ProofRequestViewModel
+            {
+                Dictionary<string, ProofAttribute> revealed = null;
+                RequestedProof proof = null;
+                try
                 {
-                    Connection = connection?.Alias.Name ?? "----",
-                    ProofRecordId = c.Id,
-                    State = c.State,
-                    CreatedAtUtc = c.CreatedAtUtc,
-                    UpdatedAtUtc = c.UpdatedAtUtc,
-                    Verified = c.GetTag("verified"),
-                    ProofJson = c.ProofJson,
-                    RequestJson = c.RequestJson,
-                    ProposalJson = c.ProposalJson
-                });
+                    
+                    //dynamic deserialized = JsonConvert.DeserializeObject(c.ProofJson);
+                    //dynamic abc = deserialized["requested_proof"]["revealed_attrs"] + deserialized["requested_proof"]["self_attested_attrs"];
+                    //Dictionary<string, ProofAttribute> a = deserialized["requested_proof"]["revealed_attrs"];
+                    //if (a != null)
+                        //revealed = a;//JsonConvert.DeserializeObject<Dictionary<string, ProofAttribute>>(a);
+                    //foreach (var atr in deserialized["requested_proof"]["revealed_attrs"])
+                    //{
+                    //    revealed.Add(atr., atr.Value.Raw);
+                    //}
+                    //proof = JsonConvert.DeserializeObject<RequestedProof>(abc);
+
+                    var connection = c.ConnectionId == null ? null : await _connectionService.GetAsync(context, c.ConnectionId);
+                    models.Add(new ProofRequestViewModel
+                    {
+                        Connection = connection?.Alias.Name ?? "----",
+                        ProofRecordId = c.Id,
+                        State = c.State,
+                        CreatedAtUtc = c.CreatedAtUtc,
+                        UpdatedAtUtc = c.UpdatedAtUtc,
+                        Verified = c.GetTag("verified"),
+                        ProofJson = c.ProofJson,
+                        RequestJson = c.RequestJson,
+                        ProposalJson = c.ProposalJson,
+                        RevealedAttrs = revealed
+                    });
+                }
+                catch (AriesFrameworkException e)
+                {
+                    models.Add(new ProofRequestViewModel
+                    {
+                        Connection = "Deleted Connection",
+                        ProofRecordId = c.Id,
+                        State = c.State,
+                        CreatedAtUtc = c.CreatedAtUtc,
+                        UpdatedAtUtc = c.UpdatedAtUtc,
+                        Verified = c.GetTag("verified"),
+                        ProofJson = c.ProofJson,
+                        RequestJson = c.RequestJson,
+                        ProposalJson = c.ProposalJson,
+                        RevealedAttrs = revealed
+                    });
+                }
             }
+
 #elif DEBUG
             models.Add(new ProofRequestViewModel
             {
@@ -98,6 +135,8 @@ namespace WebAgent.Controllers
                 ProposalJson = "{Sample JSON}"
             });
 #endif            
+
+            models.Sort((a, b) => Nullable.Compare(a.CreatedAtUtc, b.CreatedAtUtc));
             ViewData["res"] = TempData["res"];
             return View(new ProofRequestsViewModel { ProofRequests = models });
         }
@@ -105,11 +144,47 @@ namespace WebAgent.Controllers
         [HttpGet]
         public async Task<IActionResult> ProofsForm()
         {           
-            var context = await _agentContextProvider.GetContextAsync();            
+            var context = await _agentContextProvider.GetContextAsync();
+            var provisioning = await _provisionService.GetProvisioningAsync(context.Wallet);
+
+            //var validatorInfo = await Ledger.SignAndSubmitRequestAsync(await context.Pool, context.Wallet,
+            //    provisioning.IssuerDid, await Ledger.BuildGetValidatorInfoRequestAsync(provisioning.Endpoint.Did));
+
+            //object obj = JsonConvert.DeserializeObject(validatorInfo);
+            List<string> credDefs = new List<string>();
+            List<string> issuers = new List<string>();
+            for (int i = 1; i < 60; ++i)
+            {
+                var getTxn = await _ledgerService.LookupTransactionAsync(context, "1", i);
+                
+                dynamic deserialized = JsonConvert.DeserializeObject(getTxn);
+                if (deserialized["result"]["data"] == null)
+                    break;
+
+                int txnType = deserialized["result"]["data"]["txn"]["type"];
+                if (txnType == 102)
+                {
+                    string defId = deserialized["result"]["data"]["txnMetadata"]["txnId"];
+                    credDefs.Add(defId);
+                }
+                else if (txnType == 1)
+                {
+                    string role = deserialized["result"]["data"]["txn"]["data"]["role"];
+                    if (role == "0" || role == "2" || role == "101")
+                    {
+                        string issuer = deserialized["result"]["data"]["txn"]["data"]["dest"];
+                        issuers.Add(issuer);
+                    }
+                }
+                
+            }
+
             var model = new ProofFormModel
             {
                 Connections = await _connectionService.ListAsync(context),
-                CredentialDefinitions = await _schemaService.ListCredentialDefinitionsAsync(context.Wallet),
+                IssuersFromLedger = issuers,
+                //CredentialDefinitions = await _schemaService.ListCredentialDefinitionsAsync(context.Wallet),
+                CredentialDefinitionsFromLedger = credDefs,
                 Schemas = await _schemaService.ListSchemasAsync(context.Wallet)
             };
             return View(model);
@@ -129,8 +204,9 @@ namespace WebAgent.Controllers
                     {
                         SchemaName = m.Requirements.SchemaNameRestriction != "" ? m.Requirements.SchemaNameRestriction : null,
                         SchemaVersion = m.Requirements.SchemaVersionRestriction != "" ? m.Requirements.SchemaVersionRestriction : null,
-                        CredentialDefinitionId = m.Requirements.CredDeffinitionRestriction != "" ? m.Requirements.CredDeffinitionRestriction : null
-                    });
+                        CredentialDefinitionId = m.Requirements.CredDeffinitionRestriction != "" ? m.Requirements.CredDeffinitionRestriction : null,
+                        IssuerDid = m.Requirements.IssuerRestriction != "" ? m.Requirements.IssuerRestriction : null
+                    }); ;
                     reqAttrs.Add($"{m.AttributeName}_requirement", new ProofAttributeInfo
                     {
                         Name = m.AttributeName,
@@ -156,7 +232,7 @@ namespace WebAgent.Controllers
 
             var proofRequestObject = new ProofRequest
             {
-                Name = "ProofReq",
+                Name = "Proof Request",
                 Version = "3.0",
                 Nonce = new BigInteger(Guid.NewGuid().ToByteArray()).ToString(),
                 RequestedAttributes = reqAttrs,

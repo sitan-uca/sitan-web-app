@@ -38,16 +38,17 @@ namespace WebAgent.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var wallet = await _walletService.GetWalletAsync(
-                _walletOptions.WalletConfiguration,
-                _walletOptions.WalletCredentials);
+            //var wallet = await _walletService.GetWalletAsync(
+            //    _walletOptions.WalletConfiguration,
+            //    _walletOptions.WalletCredentials);
             var context = await _agentContextProvider.GetContextAsync();
             
             //ViewData["LOOKUP_RESPONSE"] = await Ledger.SubmitRequestAsync(await context.Pool,
             //    await Ledger.BuildGetNymRequestAsync(_walletOptions.AgentDid, "W2SggneqnXwS2SSHmnFJk8"));
             //ViewData["LOOKUP_DIDS"] = await Did.ListMyDidsWithMetaAsync(context.Wallet);
 
-            var provisioning = await _provisioningService.GetProvisioningAsync(wallet);
+            var provisioning = await _provisioningService.GetProvisioningAsync(context.Wallet);
+            ViewData["ImagePrefix"] = provisioning.GetTag("ProfileImagePrefix");
             return View(provisioning);
         }
         

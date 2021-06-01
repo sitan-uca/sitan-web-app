@@ -15,6 +15,7 @@ using WebAgent;
 using WebAgent.Messages;
 using WebAgent.ExtendedServices;
 using Hyperledger.Indy.PoolApi;
+using WebEnterpriseAgent.Protocols.Connection;
 
 namespace WebEnterpriseAgent
 {
@@ -46,19 +47,19 @@ namespace WebEnterpriseAgent
             {
                 builder.RegisterAgent<SimpleWebAgent>(c =>
                 {
-                    //c.AgentName = Environment.GetEnvironmentVariable("AGENT_NAME") ?? NameGenerator.GetRandomName();                    
-                    c.AgentName = "Enterprise Agent";
+                    c.AgentName = Environment.GetEnvironmentVariable("AGENT_NAME") ?? "Enterprise Agent";
+                    c.AgentImageUri = Environment.GetEnvironmentVariable("AGENT_IMAGE");
+                    //c.AgentName = "Enterprise Agent";
                     c.EndpointUri = Environment.GetEnvironmentVariable("ENDPOINT_HOST") ?? Environment.GetEnvironmentVariable("ASPNETCORE_URLS");                    
-                    c.WalletConfiguration = new WalletConfiguration { Id = "WebAgentWallet03" };
-                    c.WalletCredentials = new WalletCredentials { Key = "MyWalletKey123" };
+                    //c.WalletConfiguration = new WalletConfiguration { Id = "WebAgentWallet03" };
+                    //c.WalletCredentials = new WalletCredentials { Key = "MyWalletKey123" };
                     c.GenesisFilename = Path.GetFullPath("baksak_pool_transactions_genesis.txn");
                     c.PoolName = "baksak-pool";
-                    c.AutoRespondCredentialRequest = true;                    
-                    c.IssuerKeySeed = "111222333444555666BAKSAKSteward1";
+                    c.AutoRespondCredentialRequest = true;
+                    c.IssuerKeySeed = Environment.GetEnvironmentVariable("AGENT_ISSUER_KEY_SEED") ?? "111222333444555666BAKSAKSteward1";
                     c.ProtocolVersion = 2;
                     Pool.SetProtocolVersionAsync(2);
-                });     
-                
+                });                     
             });
 #endif
 #if RELEASE
@@ -66,14 +67,15 @@ namespace WebEnterpriseAgent
             {
                 builder.RegisterAgent<SimpleWebAgent>(c =>
                 {
-                    c.AgentName = "Enterprise Web Agent";                    
-                    c.EndpointUri = "https://enterprise-webagent-win.azurewebsites.net/";
-                    c.WalletConfiguration = new WalletConfiguration { Id = "WebAgentWallet03" };
-                    c.WalletCredentials = new WalletCredentials { Key = "MyWalletKey123" };
+                    c.AgentName = Environment.GetEnvironmentVariable("AGENT_NAME") ?? "Enterprise Web Agent";                    
+                    c.AgentImageUri = Environment.GetEnvironmentVariable("AGENT_IMAGE");
+                    c.EndpointUri = "https://enterprise-webagent-win.azurewebsites.net/";//"https://webenterpriseagentint.azurewebsites.net";
+                    //c.WalletConfiguration = new WalletConfiguration { Id = "WebAgentWallet03" };
+                    //c.WalletCredentials = new WalletCredentials { Key = "MyWalletKey123" };
                     c.GenesisFilename = Path.GetFullPath("baksak_pool_transactions_genesis.txn");
                     c.PoolName = "baksak-pool";                   
                     c.AutoRespondCredentialRequest = true;
-                    c.IssuerKeySeed = "111222333444555666BAKSAKSteward1";
+                    c.IssuerKeySeed = Environment.GetEnvironmentVariable("AGENT_ISSUER_KEY_SEED") ?? "111222333444555666BAKSAKSteward1";
                     c.ProtocolVersion = 2;
                     Pool.SetProtocolVersionAsync(2);
                 });                
@@ -83,6 +85,7 @@ namespace WebEnterpriseAgent
             // Register custom handlers with DI pipeline
             services.AddSingleton<BasicMessageHandler>();
             services.AddSingleton<TrustPingMessageHandler>();
+            services.AddSingleton<BaksakConnectionHandler>();
             //services.AddExtendedLedgerService<ExtendedLedgerService>();
             
         }

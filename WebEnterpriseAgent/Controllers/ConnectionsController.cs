@@ -71,6 +71,7 @@ namespace WebAgent.Controllers
             var context = await _agentContextProvider.GetContextAsync();
 
             var (invitation, _) = await _connectionService.CreateInvitationAsync(context, new InviteConfiguration { AutoAcceptConnection = true });
+            invitation.ImageUrl = null;
             ViewData["Invitation"] = $"{(await _provisioningService.GetProvisioningAsync(context.Wallet)).Endpoint.Uri}?c_i={EncodeInvitation(invitation)}";
             return View();
         }
@@ -141,7 +142,7 @@ namespace WebAgent.Controllers
             {
                 Connection = await _connectionService.GetAsync(context, id),
                 Messages = await _recordService.SearchAsync<BasicMessageRecord>(context.Wallet,
-                    SearchQuery.Equal(nameof(BasicMessageRecord.ConnectionId), id), null, 10),
+                    SearchQuery.Equal(nameof(BasicMessageRecord.ConnectionId), id), null, 100),
                 TrustPingSuccess = trustPingSuccess
             };
 

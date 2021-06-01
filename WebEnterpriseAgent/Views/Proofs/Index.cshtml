@@ -38,16 +38,26 @@
                                 <small class="text-muted">Updated At :&nbsp;</small>
                                 <p>@pr.UpdatedAtUtc</p>
                             </div>
+                            <div>
+                                @if (pr.RevealedAttrs != null) {
+                                    <small class="text-muted">Revealed Attributes :&nbsp;</small>
+                                        foreach (string attr in pr.RevealedAttrs.Keys)
+                                        {
+                                            <p>@attr.Replace("_requirement"," :")</p>
+                                            <p>@pr.RevealedAttrs[attr].Raw</p>
+                                        }
+                                }
+                            </div>
                         </form>
                     </div>
                     <div class="tab-pane fade" id="proof-raw-@pr.GetHashCode()" role="tabpanel" aria-labelledby="raw-proof-tab-@pr.GetHashCode()">
                         <div>
                             <small class="text-muted">Request JSON :&nbsp;</small>
-                            <textarea class="form-control" readonly cols="30" rows="3">@pr.ProofJson</textarea>
+                            <textarea class="form-control" readonly cols="30" rows="3">@pr.RequestJson</textarea>
                         </div>
                         <div>
                             <small class="text-muted">Proof JSON :&nbsp;</small>
-                            <textarea class="form-control" readonly cols="30" rows="3">@pr.RequestJson</textarea>
+                            <textarea class="form-control" readonly cols="30" rows="3">@pr.ProofJson</textarea>
                         </div>
                         <div>
                             <small class="text-muted">Proposal JSON :&nbsp;</small>

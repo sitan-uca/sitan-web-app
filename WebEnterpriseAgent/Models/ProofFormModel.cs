@@ -9,7 +9,9 @@ namespace WebAgent.Models
     public class ProofFormModel
     {
         public List<ConnectionRecord> Connections { get; set; }
+        public List<string> IssuersFromLedger { get; set; }
         public List<DefinitionRecord> CredentialDefinitions { get; set; }
+        public List<string> CredentialDefinitionsFromLedger { get; set; }
         public List<SchemaRecord> Schemas { get; set; }
         //public List<Record> Issuers { get; set; }
         
